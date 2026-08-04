@@ -6,6 +6,8 @@ Uma Pokédex completa construída com **HTML, CSS e JavaScript puro**, consumind
 
 ## 🚀 Demo
 
+**Online:** [lucastorresdebritosoares.github.io/pokedex](https://lucastorresdebritosoares.github.io/pokedex/)
+
 Para visualizar localmente:
 
 ```bash
