@@ -11,41 +11,71 @@ const GEN_LIMITS = {
     9: { offset: 905, limit: 120 }
 };
 
+const cache = {
+    pokemon: new Map(),
+    species: new Map(),
+    evolution: new Map(),
+    type: new Map(),
+    list: new Map()
+};
+
 async function fetchPokemonList(offset = 0, limit = 20) {
+    const key = `${offset}:${limit}`;
+    if (cache.list.has(key)) return cache.list.get(key);
     const response = await fetch(`${API_BASE}/pokemon?offset=${offset}&limit=${limit}`);
     if (!response.ok) throw new Error('Falha ao buscar lista de Pokémon');
     const data = await response.json();
+    cache.list.set(key, data);
     return data;
 }
 
 async function fetchPokemonByNameOrId(identifier) {
+    const key = String(identifier).toLowerCase();
+    if (cache.pokemon.has(key)) return cache.pokemon.get(key);
     const response = await fetch(`${API_BASE}/pokemon/${encodeURIComponent(identifier)}`);
     if (!response.ok) return null;
-    return response.json();
+    const data = await response.json();
+    cache.pokemon.set(key, data);
+    cache.pokemon.set(String(data.id), data);
+    return data;
 }
 
 async function fetchPokemonDetails(url) {
+    if (cache.pokemon.has(url)) return cache.pokemon.get(url);
     const response = await fetch(url);
     if (!response.ok) throw new Error('Falha ao buscar detalhes');
-    return response.json();
+    const data = await response.json();
+    cache.pokemon.set(url, data);
+    cache.pokemon.set(String(data.id), data);
+    return data;
 }
 
 async function fetchPokemonSpecies(id) {
+    const key = String(id);
+    if (cache.species.has(key)) return cache.species.get(key);
     const response = await fetch(`${API_BASE}/pokemon-species/${id}`);
     if (!response.ok) return null;
-    return response.json();
+    const data = await response.json();
+    cache.species.set(key, data);
+    return data;
 }
 
 async function fetchEvolutionChain(url) {
+    if (cache.evolution.has(url)) return cache.evolution.get(url);
     const response = await fetch(url);
     if (!response.ok) return null;
-    return response.json();
+    const data = await response.json();
+    cache.evolution.set(url, data);
+    return data;
 }
 
 async function fetchTypePokemon(type) {
+    if (cache.type.has(type)) return cache.type.get(type);
     const response = await fetch(`${API_BASE}/type/${type}`);
     if (!response.ok) return null;
-    return response.json();
+    const data = await response.json();
+    cache.type.set(type, data);
+    return data;
 }
 
 function extractTypes(pokemon) {
@@ -58,6 +88,15 @@ function getPokemonImage(pokemon) {
     return sprites.other['official-artwork'].front_default ||
            sprites.front_default ||
            sprites.other['dream_world'].front_default;
+}
+
+function getPokemonShinyImage(pokemon) {
+    const sprites = pokemon.sprites;
+    if (!sprites) return null;
+    return sprites.other['official-artwork'].front_shiny ||
+           sprites.front_shiny ||
+           sprites.other['dream_world'].front_shiny ||
+           getPokemonImage(pokemon);
 }
 
 function getSpeciesId(url) {

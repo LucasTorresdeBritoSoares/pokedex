@@ -58,6 +58,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
+    transition: var(--transition);
 }
 
 .header-content {
@@ -91,6 +92,7 @@ body {
     background-color: var(--surface-2);
     padding: 4px;
     border-radius: 12px;
+    transition: var(--transition);
 }
 
 .nav-btn {
@@ -207,6 +209,7 @@ body {
 
 .search-btn:hover {
     background-color: var(--accent-strong);
+    transform: translateY(-1px);
 }
 
 .filters {
@@ -267,6 +270,7 @@ body {
     border-radius: var(--radius);
     padding: 0.9rem 1.5rem;
     margin-bottom: 2rem;
+    transition: var(--transition);
 }
 
 .stat {
@@ -298,6 +302,7 @@ body {
     margin-bottom: 2rem;
     position: relative;
     min-height: 200px;
+    scroll-margin-top: 90px;
 }
 
 .pokemon-card {
@@ -308,7 +313,20 @@ body {
     text-align: center;
     cursor: pointer;
     position: relative;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    animation: cardIn 0.4s ease backwards;
+    animation-delay: var(--delay, 0ms);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.3s ease;
+}
+
+@keyframes cardIn {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .pokemon-card:hover {
@@ -416,6 +434,16 @@ body {
     color: #f59e0b;
 }
 
+.favorite-btn.pop {
+    animation: pop 0.35s ease;
+}
+
+@keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+
 .compare-card-btn {
     position: absolute;
     bottom: 0.7rem;
@@ -502,6 +530,48 @@ body {
     to { transform: rotate(360deg); }
 }
 
+/* ---------- Skeleton loading ---------- */
+
+.skeleton-card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem 1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    animation: cardIn 0.4s ease backwards;
+    animation-delay: var(--delay, 0ms);
+}
+
+.skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%;
+    border-radius: 8px;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-circle {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+}
+
+.skeleton-line {
+    height: 12px;
+    width: 60%;
+}
+
+.skeleton-line.w40 { width: 40%; }
+.skeleton-line.w70 { width: 70%; }
+.skeleton-line.w50 { width: 50%; }
+
+@keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
 /* ---------- Paginação ---------- */
 
 .pagination {
@@ -526,6 +596,7 @@ body {
 
 .page-btn:hover:not(:disabled) {
     border-color: var(--text-2);
+    transform: translateY(-1px);
 }
 
 .page-btn:disabled {
@@ -551,6 +622,7 @@ body {
     z-index: 200;
     padding: 1rem;
     backdrop-filter: blur(6px);
+    animation: fadeIn 0.2s ease;
 }
 
 .modal.hidden {
@@ -567,6 +639,7 @@ body {
     position: relative;
     box-shadow: var(--shadow-lg);
     animation: modalIn 0.25s ease;
+    transition: background-color 0.3s ease;
 }
 
 @keyframes modalIn {
@@ -578,6 +651,11 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .modal-close {
@@ -672,6 +750,101 @@ body {
     border-color: var(--text-2);
 }
 
+.modal-action-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.section-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-2);
+    text-align: center;
+    margin: 1.75rem 0 1rem;
+}
+
+.modal-info {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1.25rem;
+}
+
+.modal-info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.modal-info-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-2);
+}
+
+.modal-info-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.ability-list {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.ability-badge {
+    background-color: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    animation: fadeIn 0.3s ease backwards;
+}
+
+.ability-badge.hidden-ability {
+    border-style: dashed;
+    color: var(--text-2);
+}
+
+.move-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: center;
+}
+
+.move-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+    color: var(--text);
+    text-transform: capitalize;
+    animation: fadeIn 0.3s ease backwards;
+}
+
+.move-level {
+    font-size: 0.68rem;
+    color: var(--text-2);
+    text-transform: none;
+    font-variant-numeric: tabular-nums;
+}
+
 .modal-stats {
     margin-top: 1.5rem;
 }
@@ -757,6 +930,7 @@ body {
     border-radius: 12px;
     padding: 0.4rem;
     transition: var(--transition);
+    animation: fadeIn 0.3s ease backwards;
 }
 
 .evolution-item:hover {
@@ -771,6 +945,11 @@ body {
 .evolution-item img {
     width: 64px;
     height: 64px;
+    transition: transform 0.2s ease;
+}
+
+.evolution-item:hover img {
+    transform: scale(1.08);
 }
 
 .evolution-item span {
@@ -794,6 +973,7 @@ body {
     border-radius: var(--radius-lg);
     padding: 2rem;
     margin-bottom: 2rem;
+    transition: var(--transition);
 }
 
 .compare-section h2 {
@@ -892,6 +1072,7 @@ body {
 
 .compare-btn:hover:not(:disabled) {
     background-color: var(--accent-strong);
+    transform: translateY(-1px);
 }
 
 .compare-btn:disabled {
@@ -1016,5 +1197,16 @@ body {
 
     .compare-slot {
         min-width: 150px;
+    }
+}
+
+/* ---------- Acessibilidade: reduz movimento ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }

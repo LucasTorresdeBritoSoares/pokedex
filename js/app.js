@@ -8,6 +8,8 @@ const FALLBACK_IMAGE = 'data:image/svg+xml;utf8,' + encodeURIComponent(
 
 const SCALES_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M8 21h8"/><path d="M7 7h10"/><path d="M7 7 5.5 11a2.5 2.5 0 0 0 5 0L9 7"/><path d="M17 7l-1.5 4a2.5 2.5 0 0 0 5 0L19 7"/></svg>';
 
+const SPARKLE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z"/><path d="M19 15l.9 2.9L23 19l-3.1.9L19 23l-.9-3.1L15 19l3.1-1.1z"/></svg>';
+
 const state = {
     currentPage: 1,
     pageSize: 20,
@@ -90,7 +92,11 @@ async function loadPokemonForCurrentView() {
             elements.grid.innerHTML = '<div class="loading"><p>Você ainda não tem favoritos.</p></div>';
             elements.displayedPokemon.textContent = 0;
         } else {
-            result.list.forEach(pokemon => elements.grid.appendChild(createPokemonCard(pokemon)));
+            result.list.forEach((pokemon, i) => {
+                const card = createPokemonCard(pokemon);
+                card.style.setProperty('--delay', `${Math.min(i * 35, 600)}ms`);
+                elements.grid.appendChild(card);
+            });
             elements.displayedPokemon.textContent = result.list.length;
         }
         updatePagination(state.totalPages);
@@ -191,10 +197,20 @@ async function fetchPokemonEntries(entries, requestId) {
 }
 
 function createLoadingElement() {
-    const div = document.createElement('div');
-    div.className = 'loading';
-    div.innerHTML = '<div class="pokeball"></div><p>Carregando Pokémon...</p>';
-    return div;
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < 12; i++) {
+        const skeleton = document.createElement('div');
+        skeleton.className = 'skeleton-card';
+        skeleton.innerHTML = `
+            <div class="skeleton skeleton-circle"></div>
+            <div class="skeleton skeleton-line w40"></div>
+            <div class="skeleton skeleton-line w70"></div>
+            <div class="skeleton skeleton-line w50"></div>
+        `;
+        skeleton.style.setProperty('--delay', `${i * 40}ms`);
+        fragment.appendChild(skeleton);
+    }
+    return fragment;
 }
 
 function createPokemonCard(pokemon) {
@@ -261,6 +277,9 @@ function handleCompareClick(pokemon) {
 
 function toggleCardFavorite(pokemon, btn) {
     const added = toggleFavorite(pokemon.id);
+    btn.classList.remove('pop');
+    void btn.offsetWidth;
+    btn.classList.add('pop');
     refreshCardFavorites();
     updateFavoritesCount();
 
@@ -351,12 +370,14 @@ function setupEventListeners() {
         if (state.currentPage > 1) {
             state.currentPage--;
             loadPokemonForCurrentView();
+            elements.grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     });
 
     elements.nextPage.addEventListener('click', () => {
         state.currentPage++;
         loadPokemonForCurrentView();
+        elements.grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     elements.modalClose.addEventListener('click', closeModal);
@@ -445,7 +466,31 @@ function closeModal() {
 function renderPokemonModal(pokemon, species, modalId) {
     const types = extractTypes(pokemon);
     const image = getPokemonImage(pokemon) || FALLBACK_IMAGE;
+    const shinyImage = getPokemonShinyImage(pokemon) || image;
+    const hasShiny = shinyImage !== image;
     const description = extractDescription(species);
+
+    const height = `${(pokemon.height / 10).toLocaleString('pt-BR')} m`;
+    const weight = `${(pokemon.weight / 10).toLocaleString('pt-BR')} kg`;
+    const baseExperience = pokemon.base_experience ?? '—';
+
+    const abilities = pokemon.abilities.map(a => ({
+        name: a.ability.name.replace(/-/g, ' '),
+        hidden: a.is_hidden
+    }));
+
+    const levelMoves = pokemon.moves
+        .map(m => {
+            const info = m.version_group_details.find(d => d.move_learn_method.name === 'level-up');
+            return info ? { name: m.move.name.replace(/-/g, ' '), level: info.level_learned_at } : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.level - b.level)
+        .slice(0, 8);
+
+    const moves = levelMoves.length
+        ? levelMoves.map(m => `<span class="move-item">${m.name} <span class="move-level">nível ${m.level}</span></span>`).join('')
+        : pokemon.moves.slice(0, 8).map(m => `<span class="move-item">${m.move.name.replace(/-/g, ' ')}</span>`).join('');
 
     const statNames = {
         hp: 'HP',
@@ -459,15 +504,41 @@ function renderPokemonModal(pokemon, species, modalId) {
     elements.modalBody.innerHTML = `
         <div class="modal-header">
             <span class="modal-number">#${String(pokemon.id).padStart(3, '0')}</span>
-            <img class="modal-image" src="${image}" alt="${pokemon.name}">
+            <img class="modal-image" src="${image}" alt="${pokemon.name}" data-default="${image}" data-shiny="${shinyImage}">
             <h2 class="modal-name">${pokemon.name}</h2>
             <div class="modal-types">
                 ${types.map(type => `<span class="type-badge type-${type}">${type}</span>`).join('')}
             </div>
+            <div class="modal-info">
+                <div class="modal-info-item">
+                    <span class="modal-info-label">Altura</span>
+                    <span class="modal-info-value">${height}</span>
+                </div>
+                <div class="modal-info-item">
+                    <span class="modal-info-label">Peso</span>
+                    <span class="modal-info-value">${weight}</span>
+                </div>
+                <div class="modal-info-item">
+                    <span class="modal-info-label">XP base</span>
+                    <span class="modal-info-value">${baseExperience}</span>
+                </div>
+            </div>
             <div class="modal-actions">
                 <button class="modal-action-btn" id="modalFavBtn">${isFavorite(pokemon.id) ? '★ Favorito' : '☆ Favoritar'}</button>
                 <button class="modal-action-btn" id="modalCompareBtn">${SCALES_ICON} Comparar</button>
+                ${hasShiny ? `<button class="modal-action-btn" id="modalShinyBtn" title="Alternar versão shiny">${SPARKLE_ICON} Brilho</button>` : ''}
             </div>
+        </div>
+        ${abilities.length ? `
+            <div class="modal-abilities">
+                <h3 class="section-title">Habilidades</h3>
+                <div class="ability-list">
+                    ${abilities.map((a, i) => `<span class="ability-badge${a.hidden ? ' hidden-ability' : ''}" style="animation-delay:${i * 60}ms">${a.name}${a.hidden ? ' (oculta)' : ''}</span>`).join('')}
+                </div>
+            </div>` : ''}
+        <div class="modal-moves">
+            <h3 class="section-title">Movimentos</h3>
+            <div class="move-list">${moves}</div>
         </div>
         <div class="modal-stats">
             ${pokemon.stats.map(stat => {
@@ -507,6 +578,16 @@ function renderPokemonModal(pokemon, species, modalId) {
         handleCompareClick(pokemon);
     });
 
+    const shinyBtn = document.getElementById('modalShinyBtn');
+    if (shinyBtn) {
+        shinyBtn.addEventListener('click', () => {
+            const img = elements.modalBody.querySelector('.modal-image');
+            const isShiny = img.src === img.dataset.shiny;
+            img.src = isShiny ? img.dataset.default : img.dataset.shiny;
+            shinyBtn.classList.toggle('active', !isShiny);
+        });
+    }
+
     requestAnimationFrame(() => {
         document.querySelectorAll('.stat-bar').forEach(bar => {
             bar.style.width = bar.dataset.width + '%';
@@ -530,12 +611,12 @@ async function loadEvolutions(species, currentId, modalId) {
         if (modalId !== state.modalId) return;
 
         const evolutionList = flattenEvolutionChain(evolutionData.chain);
-        const items = await Promise.all(evolutionList.map(async evo => {
+        const items = await Promise.all(evolutionList.map(async (evo, i) => {
             const pokemon = await fetchPokemonByNameOrId(evo.id);
             const image = getPokemonImage(pokemon) || FALLBACK_IMAGE;
             const isCurrent = evo.id === currentId;
             return `
-                <div class="evolution-item ${isCurrent ? 'current' : ''}" data-evo-id="${evo.id}">
+                <div class="evolution-item ${isCurrent ? 'current' : ''}" data-evo-id="${evo.id}" style="animation-delay:${i * 90}ms">
                     <img src="${image}" alt="${evo.name}">
                     <span>${evo.name}</span>
                 </div>
