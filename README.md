@@ -97,4 +97,4 @@ A aplicação foi validada em Chrome headless cobrindo:
 
 ## 👤 Autor
 
-**Lucas Torres** — lucas_torres_01@outlook.com | [GitHub](https://github.com/) | [LinkedIn](https://www.linkedin.com/)
+**Lucas Torres** — lucas_torres_01@outlook.com | [GitHub](https://github.com/LucasTorresdeBritoSoares) | [Controle de Gastos (full stack)](https://github.com/LucasTorresdeBritoSoares/controle-de-gastos)
